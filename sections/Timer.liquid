@@ -1,0 +1,291 @@
+<style>
+.countdown-timer-wrapper {
+  text-align: center;
+  justify-content: center;
+  grid-area: countdown;
+  background: #321748;
+  padding: 1rem;
+}
+
+header .announcement-bar__message {
+  padding: 1rem 1rem 0 0;
+}
+
+.clockdiv {
+  margin-top: 0.5rem;
+  font-family: sans-serif;
+}
+
+.clockdiv > div {
+  display: inline-block;
+  margin: 0 0.25em;
+}
+
+.clockdiv .lbl {
+  display: block;
+  font-size: 0.5em;
+  text-align: center;
+}
+
+.digit-box {
+  display: inline-block;
+  width: 2em;
+  height: 2em;
+  margin: 0 0.1em;
+  background-color: white;
+  color: black;
+  border-radius: 3px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 2em;
+}
+
+.dashed-line p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.dashed-line p::before {
+  content: "";
+  flex: 1;
+  border-bottom: 1px dashed #999;
+  margin: 0 10px;
+}
+
+.dashed-line p strong {
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+@media only screen and (max-width: 749px) {
+  header .clockdiv,
+  header .announcement-bar__message {
+    font-size: 0.8em;
+    padding: 0;
+  }
+  header .clockdiv {
+    margin-top: 0;
+  }
+}
+
+@media only screen and (min-width: 750px) {
+  .countdown-timer-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+</style>
+
+<section id="countdown-{{ section.id }}" class="countdown-timer-section color-{{ section.settings.color_scheme }}">
+  {% style %}
+    {{ 'component-countdown-timer.css' | asset_url | stylesheet_tag }}
+  {% endstyle %}
+
+  {%- liquid
+    assign current_time = 'now' | date: '%s' | plus: 0
+    assign javascript_timestamp_end = section.settings.end_date_time | date: '%s'
+    assign javascript_timestamp_start = section.settings.start_date_time | date: '%s'
+    assign auto_hide = section.settings.auto_hide
+    assign start_timestamp = javascript_timestamp_start | plus: 0
+    assign end_timestamp = javascript_timestamp_end | plus: 0
+
+    assign show_countdown = true
+    if javascript_timestamp_start != blank and javascript_timestamp_start != ''
+      if start_timestamp > current_time
+        assign show_countdown = false
+      endif
+    endif
+
+    if auto_hide and end_timestamp < current_time
+      assign show_countdown = false
+    endif
+  -%}
+
+  {% if show_countdown %}
+    <div class="countdown-timer-wrapper {{ section.settings.css_class }}">
+      {% if section.settings.link != blank %}
+        <a href="{{ section.settings.link }}" class="announcement-bar__link link link--text focus-inset animate-arrow">
+      {% endif %}
+
+      {% if section.settings.title != blank %}
+        <p class="announcement-bar__message h5">
+          {{ section.settings.title }}
+          {% if section.settings.link != blank %}
+            {% render 'icon-arrow' %}
+          {% endif %}
+        </p>
+      {% endif %}
+
+      <div id="dac-countdown-{{ section.id }}" class="clockdiv">
+        <div>
+          <span class="digit days">00</span>
+          <span class="lbl">Days</span>
+        </div>
+        <div>
+          <span class="digit hours">00</span>
+          <span class="lbl">Hours</span>
+        </div>
+        <div>
+          <span class="digit minutes">00</span>
+          <span class="lbl">Minutes</span>
+        </div>
+        <div>
+          <span class="digit seconds">00</span>
+          <span class="lbl">Seconds</span>
+        </div>
+      </div>
+
+      {% if section.settings.link != blank %}
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="dashed-line">
+      <p>Magic Menopause Program <strong>$1497</strong></p>
+    </div>
+
+    {% if section.settings.first_countdown %}
+      <script>
+        function getTimeRemaining(endtime) {
+          if (Date.parse(endtime) < Date.parse(new Date())) {
+            endtime = new Date();
+          }
+          const total = Date.parse(endtime) - Date.parse(new Date());
+          const seconds = Math.floor((total / 1000) % 60);
+          const minutes = Math.floor((total / 1000 / 60) % 60);
+          const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+          const days = Math.floor(total / (1000 * 60 * 60 * 24));
+          return { total, days, hours, minutes, seconds };
+        }
+
+        function initializeClock(id, endtime) {
+          const clock = document.getElementById(id);
+          const daysSpan = clock.querySelector('.days');
+          const hoursSpan = clock.querySelector('.hours');
+          const minutesSpan = clock.querySelector('.minutes');
+          const secondsSpan = clock.querySelector('.seconds');
+
+          function setDigits(element, value) {
+            element.innerHTML = '';
+            String(value).padStart(2,'0').split('').forEach(d => {
+              const span = document.createElement('span');
+              span.className = 'digit-box';
+              span.textContent = d;
+              element.appendChild(span);
+            });
+          }
+
+          function updateClock() {
+            const t = getTimeRemaining(endtime);
+            setDigits(daysSpan, t.days);
+            setDigits(hoursSpan, t.hours);
+            setDigits(minutesSpan, t.minutes);
+            setDigits(secondsSpan, t.seconds);
+            if (t.total <= 0) clearInterval(timeinterval);
+          }
+
+          updateClock();
+          const timeinterval = setInterval(updateClock, 1000);
+        }
+
+        initializeClock('dac-countdown-{{ section.id }}', '{{ section.settings.end_date_time }}');
+      </script>
+    {% endif %}
+  {% endif %}
+</section>
+
+
+{% schema %}
+{
+  "name": "Countdown Timer",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Counter Label",
+      "default": "Ends In:"
+    },
+    {
+      "type": "text",
+      "id": "start_date_time",
+      "label": "Start Date / Time (optional)",
+      "info": "Leave blank to show timer immediately. Example: May 7, 2023 03:00:00 GMT-0400"
+    },
+    {
+      "type": "text",
+      "id": "end_date_time",
+      "label": "End Date / Time",
+      "info": "Example: Nov 27, 2023 03:00:00 GMT-0500"
+    },
+    {
+      "type": "checkbox",
+      "id": "auto_hide",
+      "label": "Automatically hide timer once end time is reached"
+    },
+    {
+      "type": "checkbox",
+      "id": "first_countdown",
+      "label": "Is this the first countdown on the page?",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "options": [
+        { "value": "accent-1", "label": "Accent 1" },
+        { "value": "accent-2", "label": "Accent 2" },
+        { "value": "accent-3", "label": "Accent 3" },
+        { "value": "accent-4", "label": "Accent 4" },
+        { "value": "background-1", "label": "Background 1" },
+        { "value": "background-2", "label": "Background 2" },
+        { "value": "inverse", "label": "Inverse" }
+      ],
+      "default": "background-1",
+      "label": "Color Scheme"
+    },
+    {
+      "type": "url",
+      "id": "link",
+      "label": "Link"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 52
+    },
+    {
+      "type": "text",
+      "id": "css_class",
+      "label": "CSS Class"
+    },
+    {
+        "type": "richtext",
+        "id": "badge_text",
+        "label": "Badge Text"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Countdown Timer"
+    }
+  ]
+}
+{% endschema %}
